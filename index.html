@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>StudyFlow — AI Study Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a24;--bg4:#22222f;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--accent:#7c6fff;--accent2:#a594ff;--glow:rgba(124,111,255,0.15);--text:#f0efff;--text2:#9995bb;--text3:#5f5c7a;--green:#4ade80;--amber:#fbbf24;--red:#f87171;--teal:#2dd4bf;--fh:'Syne',sans-serif;--fb:'DM Sans',sans-serif;--r:14px;--rs:8px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{color:var(--accent2);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:1000;padding:1rem}
+.modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:24px;padding:2.5rem;max-width:580px;width:100%;max-height:92vh;overflow-y:auto}
+.modal-icon{font-size:2.5rem;margin-bottom:1rem}
+.modal-box h2{font-family:var(--fh);font-size:2rem;font-weight:800;margin-bottom:.5rem;background:linear-gradient(135deg,var(--text),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.modal-box>p{color:var(--text2);margin-bottom:2rem;line-height:1.6}
+.setup-steps{display:flex;flex-direction:column;gap:.75rem;margin-bottom:1.75rem}
+.setup-step{display:flex;gap:.875rem;align-items:flex-start;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:.875rem}
+.step-num{background:var(--accent);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:700;font-size:.8rem;flex-shrink:0}
+.setup-step strong{display:block;font-family:var(--fh);font-size:.9rem;margin-bottom:.2rem}
+.setup-step p{color:var(--text2);font-size:.82rem;line-height:1.5}
+.form-group{margin-bottom:1.1rem}
+.form-group label{display:block;font-size:.78rem;font-weight:700;color:var(--text2);margin-bottom:.4rem;font-family:var(--fh);text-transform:uppercase;letter-spacing:.05em}
+.form-group input,.form-group textarea{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);padding:.7rem 1rem;color:var(--text);font-family:var(--fb);font-size:.93rem;outline:none;transition:border-color .2s}
+.form-group input:focus,.form-group textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--glow)}
+.btn-primary{width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);padding:.85rem 1.5rem;font-family:var(--fh);font-size:.95rem;font-weight:700;cursor:pointer;transition:all .2s;margin-bottom:.65rem}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 8px 24px rgba(124,111,255,.4)}
+.btn-secondary{width:100%;background:transparent;color:var(--text2);border:1px solid var(--border2);border-radius:var(--rs);padding:.7rem 1.5rem;font-family:var(--fh);font-size:.88rem;cursor:pointer;transition:all .2s}
+.btn-secondary:hover{background:var(--bg3);color:var(--text)}
+.modal-note{font-size:.72rem;color:var(--text3);text-align:center;margin-top:1rem;line-height:1.5}
+
+/* APP */
+.app{display:flex;height:100vh;overflow:hidden}
+.app.hidden{display:none}
+
+/* SIDEBAR */
+.sidebar{width:255px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.4rem .9rem;overflow-y:auto;transition:transform .3s;z-index:50}
+.logo{display:flex;align-items:center;gap:.55rem;padding:0 .4rem;margin-bottom:1.75rem}
+.logo-icon{font-size:1.4rem}
+.logo-text{font-family:var(--fh);font-weight:800;font-size:1.25rem;background:linear-gradient(135deg,var(--text),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sb-section{margin-bottom:1.4rem}
+.sb-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);padding:0 .45rem;margin-bottom:.4rem}
+.sb-btn{display:flex;align-items:center;gap:.55rem;width:100%;background:transparent;border:none;border-radius:var(--rs);padding:.65rem .7rem;color:var(--text2);font-family:var(--fb);font-size:.87rem;cursor:pointer;transition:all .15s;text-align:left}
+.sb-btn:hover{background:var(--bg3);color:var(--text)}
+.sb-btn.active{background:var(--glow);color:var(--accent2);border:1px solid rgba(124,111,255,.2)}
+.bi{font-size:.95rem;flex-shrink:0}
+.class-nav-btn{display:flex;align-items:center;gap:.55rem;width:100%;background:transparent;border:none;border-radius:var(--rs);padding:.55rem .7rem;color:var(--text2);font-family:var(--fb);font-size:.83rem;cursor:pointer;transition:all .15s;text-align:left}
+.class-nav-btn:hover{background:var(--bg3);color:var(--text)}
+.class-nav-btn.active{background:var(--glow);color:var(--accent2)}
+.cdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sb-bottom{margin-top:auto;padding-top:.9rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.2rem}
+
+/* MAIN */
+.main-content{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;gap:.9rem;padding:.9rem 1.4rem;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
+.hamburger{display:none;background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:pointer;padding:.2rem}
+.topbar-title{font-family:var(--fh);font-weight:700;font-size:1.05rem;flex:1}
+.topbar-right{display:flex;align-items:center;gap:.85rem}
+.gstatus{display:flex;align-items:center;gap:.35rem;font-size:.78rem;color:var(--text3)}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--text3);transition:background .3s}
+.sdot.on{background:var(--green)}
+.btn-google{background:#fff;color:#1a1a2e;border:none;border-radius:var(--rs);padding:.45rem .9rem;font-family:var(--fh);font-weight:700;font-size:.82rem;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-google:hover{background:#e8e8ff;transform:translateY(-1px)}
+.btn-google.on{background:var(--bg3);color:var(--green);border:1px solid rgba(74,222,128,.3)}
+
+/* VIEWS */
+.view{flex:1;overflow-y:auto;padding:1.75rem}
+.view.hidden{display:none!important}
+.view-header{margin-bottom:1.75rem}
+.view-header h1{font-family:var(--fh);font-size:1.9rem;font-weight:800;margin-bottom:.35rem}
+.vsub{color:var(--text2);font-size:.95rem}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:3.5rem 2rem;max-width:460px;margin:0 auto}
+.empty-icon{font-size:3rem;margin-bottom:1.25rem}
+.empty-state h3{font-family:var(--fh);font-size:1.3rem;margin-bottom:.65rem}
+.empty-state p{color:var(--text2);line-height:1.6;margin-bottom:1.75rem}
+.empty-state .btn-primary{max-width:290px;margin:0 auto}
+
+/* BANNER */
+.banner{background:linear-gradient(135deg,rgba(124,111,255,.15),rgba(45,212,191,.1));border:1px solid rgba(124,111,255,.25);border-radius:var(--r);padding:1.1rem 1.4rem;margin-bottom:1.75rem;display:flex;align-items:center;gap:.9rem}
+.banner-text h3{font-family:var(--fh);font-size:1.05rem;font-weight:700;margin-bottom:.2rem}
+.banner-text p{color:var(--text2);font-size:.85rem}
+
+/* CLASS SECTIONS */
+.class-section{margin-bottom:2.75rem}
+.csh{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.1rem;padding-bottom:.65rem;border-bottom:1px solid var(--border)}
+.cst{display:flex;align-items:center;gap:.65rem}
+.cst h2{font-family:var(--fh);font-size:1.2rem;font-weight:700}
+.cs-link{font-size:.82rem;color:var(--accent2);cursor:pointer;background:none;border:none;font-family:var(--fb)}
+.cs-link:hover{text-decoration:underline}
+.tag{display:inline-block;font-size:.7rem;font-weight:700;padding:.15rem .5rem;border-radius:20px;text-transform:uppercase;letter-spacing:.04em}
+
+/* RESOURCE GRID */
+.resource-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:.9rem}
+.rc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.15rem;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.rc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--cc,var(--accent))}
+.rc:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.rc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:.65rem}
+.rtype{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3)}
+.rstatus{font-size:.68rem;padding:.18rem .5rem;border-radius:20px;font-weight:700}
+.s-new{background:rgba(74,222,128,.15);color:var(--green)}
+.s-done{background:rgba(124,111,255,.15);color:var(--accent2)}
+.rc h4{font-family:var(--fh);font-size:.92rem;font-weight:600;margin-bottom:.35rem;line-height:1.4}
+.rc p{font-size:.8rem;color:var(--text2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rc-footer{display:flex;align-items:center;justify-content:space-between;margin-top:.9rem;padding-top:.65rem;border-top:1px solid var(--border)}
+.rdate{font-size:.72rem;color:var(--text3)}
+.btn-gen{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:.32rem .7rem;font-size:.76rem;font-family:var(--fh);font-weight:700;cursor:pointer;transition:all .15s}
+.btn-gen:hover{background:var(--accent2)}
+.btn-gen:disabled{background:var(--bg4);color:var(--text3);cursor:not-allowed}
+
+/* CLASS PAGE */
+.class-header{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.75rem;margin-bottom:1.4rem;position:relative;overflow:hidden}
+.class-header::after{content:attr(data-i);position:absolute;right:-1rem;top:-1rem;font-family:var(--fh);font-size:7rem;font-weight:900;opacity:.04;color:#fff;line-height:1}
+.class-header h1{font-family:var(--fh);font-size:1.65rem;font-weight:800;margin-bottom:.35rem}
+.ch-meta{color:var(--text2);font-size:.87rem;display:flex;gap:1.25rem;flex-wrap:wrap}
+.class-tabs{display:flex;gap:.45rem;margin-bottom:1.4rem;flex-wrap:wrap}
+.tab-btn{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:.55rem 1rem;color:var(--text2);font-family:var(--fb);font-size:.87rem;cursor:pointer;transition:all .15s}
+.tab-btn:hover{background:var(--bg3);color:var(--text)}
+.tab-btn.active{background:var(--glow);color:var(--accent2);border-color:rgba(124,111,255,.3)}
+
+/* NOTES */
+.note-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:.9rem}
+.nch{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.15rem;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border)}
+.nch:hover{background:var(--bg3)}
+.nch h4{font-family:var(--fh);font-size:.95rem;font-weight:700}
+.ntog{color:var(--text3);transition:transform .2s}
+.ntog.open{transform:rotate(180deg)}
+.ncb{padding:1.4rem;display:none;line-height:1.7;color:var(--text2)}
+.ncb.open{display:block}
+.ncb h5{font-family:var(--fh);color:var(--accent2);font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 .4rem}
+.ncb h5:first-child{margin-top:0}
+.ncb ul{padding-left:1.2rem;margin-bottom:.65rem}
+.ncb li{margin-bottom:.35rem}
+.ncb strong{color:var(--text)}
+
+/* DIAGRAMS */
+.diagram-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.4rem;margin-bottom:.9rem}
+.diagram-card h4{font-family:var(--fh);font-size:.95rem;margin-bottom:.9rem}
+.diagram-content{font-family:'Courier New',monospace;font-size:.8rem;color:var(--text2);line-height:1.8;background:var(--bg);border-radius:var(--rs);padding:.9rem;white-space:pre-wrap;overflow-x:auto}
+
+/* QBANK */
+.qbank-section h3{font-family:var(--fh);font-size:1.05rem;margin-bottom:.9rem;color:var(--accent2)}
+.qcard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.15rem;margin-bottom:.65rem;transition:border-color .2s}
+.qcard:hover{border-color:var(--border2)}
+.qnum{font-size:.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.45rem}
+.qtext{font-size:.92rem;line-height:1.6;margin-bottom:.9rem;color:var(--text)}
+.q-opts{display:flex;flex-direction:column;gap:.35rem;margin-bottom:.65rem}
+.qopt{display:flex;align-items:center;gap:.55rem;padding:.45rem .7rem;border-radius:var(--rs);border:1px solid var(--border);cursor:pointer;font-size:.85rem;transition:all .15s;background:var(--bg)}
+.qopt:hover{background:var(--bg3);border-color:var(--border2)}
+.qopt.correct{background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.3);color:var(--green)}
+.qopt.wrong{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:var(--red)}
+.q-reveal{background:transparent;border:1px solid var(--border2);border-radius:var(--rs);padding:.38rem .7rem;color:var(--text2);font-size:.78rem;cursor:pointer;transition:all .15s}
+.q-reveal:hover{background:var(--bg3);color:var(--text)}
+.qans{display:none;margin-top:.65rem;padding:.7rem;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);border-radius:var(--rs);font-size:.85rem;color:var(--green);line-height:1.5}
+.qans.open{display:block}
+
+/* RESOURCES LIST */
+.res-list{display:flex;flex-direction:column;gap:.65rem}
+.rli{display:flex;align-items:center;gap:.9rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:.9rem 1.1rem;transition:all .15s}
+.rli:hover{border-color:var(--border2);background:var(--bg3)}
+.rli-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.rli-info{flex:1;min-width:0}
+.rli-info h5{font-family:var(--fh);font-size:.87rem;font-weight:600;margin-bottom:.18rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rli-info p{font-size:.75rem;color:var(--text3)}
+.rli-actions{display:flex;gap:.35rem}
+
+/* CHAT */
+.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 185px);max-width:780px}
+.chat-msgs{flex:1;overflow-y:auto;padding:.9rem 0;display:flex;flex-direction:column;gap:1.1rem}
+.msg{display:flex;gap:.65rem;align-items:flex-start}
+.msg.user{flex-direction:row-reverse}
+.mavatar{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;background:var(--bg3);border:1px solid var(--border)}
+.msg.user .mavatar{background:var(--accent);border-color:transparent;color:#fff}
+.mbubble{background:var(--bg2);border:1px solid var(--border);border-radius:13px;padding:.8rem 1rem;font-size:.9rem;line-height:1.7;max-width:76%;color:var(--text);white-space:pre-wrap}
+.msg.user .mbubble{background:var(--accent);border-color:transparent;color:#fff;border-bottom-right-radius:3px}
+.msg.assistant .mbubble{border-bottom-left-radius:3px}
+.mbubble.typing::after{content:'●●●';animation:blink 1s infinite;font-size:.65rem;letter-spacing:.2em;color:var(--text3)}
+@keyframes blink{0%,80%,100%{opacity:0}40%{opacity:1}}
+.quick-prompts{display:flex;flex-wrap:wrap;gap:.45rem;padding:.65rem 0}
+.quick-prompts button{background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:.38rem .85rem;color:var(--text2);font-size:.78rem;cursor:pointer;transition:all .15s;font-family:var(--fb)}
+.quick-prompts button:hover{background:var(--bg3);color:var(--text);border-color:var(--accent)}
+.chat-input-row{display:flex;gap:.65rem;align-items:flex-end;padding-top:.65rem;border-top:1px solid var(--border)}
+.chat-input-row textarea{flex:1;background:var(--bg2);border:1px solid var(--border2);border-radius:11px;padding:.7rem .9rem;color:var(--text);font-family:var(--fb);font-size:.92rem;resize:none;outline:none;max-height:140px;overflow-y:auto;transition:border-color .2s;line-height:1.5}
+.chat-input-row textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--glow)}
+.send-btn{width:40px;height:40px;background:var(--accent);border:none;border-radius:9px;color:#fff;font-size:.95rem;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.send-btn:hover{background:var(--accent2);transform:scale(1.05)}
+.send-btn:disabled{background:var(--bg3);cursor:not-allowed;transform:none}
+
+/* SETTINGS */
+.settings-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:999;padding:1rem}
+.settings-overlay.hidden{display:none!important}
+.settings-box{background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:1.9rem;width:100%;max-width:420px}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.4rem}
+.sh h3{font-family:var(--fh);font-size:1.2rem;font-weight:700}
+.sh button{background:none;border:none;color:var(--text2);font-size:1.05rem;cursor:pointer;padding:.2rem}
+
+/* LOADING */
+.gen-card{background:var(--bg2);border:1px solid rgba(124,111,255,.2);border-radius:var(--r);padding:1.9rem;text-align:center;margin-bottom:.9rem}
+.spinner{width:34px;height:34px;border:3px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes spin-fast{to{transform:rotate(360deg)}}
+.syncing{display:inline-block;animation:spin-fast .6s linear infinite}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .sidebar{position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .hamburger{display:block}
+  .view{padding:1.1rem}
+  .resource-grid{grid-template-columns:1fr}
+  .mbubble{max-width:90%}
+  #status-text{display:none}
+}
+
+/* UTILS */
+.hidden{display:none!important}
+.fade-in{animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- SETUP MODAL -->
+<div id="setup-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-icon">⚡</div>
+    <h2>Welcome to StudyFlow</h2>
+    <p>Your AI-powered study hub — connects to Google Classroom and instantly creates notes, diagrams &amp; question banks. 100% free.</p>
+    <div class="setup-steps">
+      <div class="setup-step">
+        <span class="step-num">1</span>
+        <div>
+          <strong>Get your FREE Gemini API key</strong>
+          <p>Go to <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com/app/apikey</a> → sign in with Google → click "Get API key" → "Create API key in new project". No credit card, completely free.</p>
+        </div>
+      </div>
+      <div class="setup-step">
+        <span class="step-num">2</span>
+        <div>
+          <strong>Get your Google OAuth Client ID</strong>
+          <p>Go to <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a> → New Project → Enable Classroom API → Credentials → OAuth 2.0 Client ID (Web app) → add your GitHub Pages URL as authorised origin (e.g. https://yourusername.github.io)</p>
+        </div>
+      </div>
+      <div class="setup-step">
+        <span class="step-num">3</span>
+        <div>
+          <strong>Paste both keys below and launch</strong>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Gemini API Key (Free — no credit card)</label>
+      <input type="password" id="setup-gemini-key" placeholder="AIzaSy..."/>
+    </div>
+    <div class="form-group">
+      <label>Google OAuth Client ID</label>
+      <input type="text" id="setup-google-id" placeholder="xxxxxxxx.apps.googleusercontent.com"/>
+    </div>
+    <button class="btn-primary" onclick="saveSetup()">Launch StudyFlow →</button>
+    <p class="modal-note">Your keys are saved only in your browser's local storage — never sent to any server except the official Google and Gemini APIs.</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="app hidden">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="logo">
+      <span class="logo-icon">⚡</span>
+      <span class="logo-text">StudyFlow</span>
+    </div>
+    <div class="sb-section">
+      <button class="sb-btn active" onclick="showView('dashboard')" id="nav-dashboard"><span class="bi">◈</span>Dashboard</button>
+      <button class="sb-btn" onclick="showView('assistant')" id="nav-assistant"><span class="bi">◎</span>AI Assistant</button>
+    </div>
+    <div class="sb-section">
+      <div class="sb-label">My Classes</div>
+      <div id="classes-nav"></div>
+    </div>
+    <div class="sb-bottom">
+      <button class="sb-btn" onclick="syncClassroom()" id="sync-btn"><span class="bi" id="sync-icon">↻</span>Sync Classroom</button>
+      <button class="sb-btn" onclick="openSettings()"><span class="bi">⚙</span>Settings</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <div class="topbar">
+      <button class="hamburger" onclick="toggleSB()">☰</button>
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-right">
+        <div class="gstatus"><span class="sdot" id="sdot"></span><span id="stext">Not connected</span></div>
+        <button class="btn-google" id="gbtn" onclick="handleGoogleAuth()">Connect Google</button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="view" id="view-dashboard">
+      <div class="view-header">
+        <h1 id="greeting">Good afternoon! 👋</h1>
+        <p class="vsub">Your classes, notes and study materials — all in one place.</p>
+      </div>
+      <div id="dash-empty" class="empty-state">
+        <div class="empty-icon">🎓</div>
+        <h3>Connect Google Classroom to begin</h3>
+        <p>Click "Connect Google" in the top right, then "Sync Classroom" in the sidebar to pull all your classes and resources.</p>
+        <button class="btn-primary" onclick="handleGoogleAuth()">Connect Google Classroom →</button>
+      </div>
+      <div id="dash-content" class="hidden">
+        <div class="banner" id="dash-banner"></div>
+        <div id="all-classes"></div>
+      </div>
+    </div>
+
+    <!-- CLASS VIEW -->
+    <div class="view hidden" id="view-class">
+      <div class="class-header" id="class-header"></div>
+      <div class="class-tabs">
+        <button class="tab-btn active" onclick="switchTab('notes')" id="tab-notes">📝 Notes</button>
+        <button class="tab-btn" onclick="switchTab('diagrams')" id="tab-diagrams">🗂 Diagrams</button>
+        <button class="tab-btn" onclick="switchTab('qbank')" id="tab-qbank">❓ Question Bank</button>
+        <button class="tab-btn" onclick="switchTab('resources')" id="tab-resources">📚 Resources</button>
+      </div>
+      <div id="class-content"></div>
+    </div>
+
+    <!-- ASSISTANT -->
+    <div class="view hidden" id="view-assistant">
+      <div class="view-header">
+        <h1>AI Study Assistant</h1>
+        <p class="vsub">Ask anything about your classes, notes, or topics. Powered by Google Gemini (free).</p>
+      </div>
+      <div class="chat-wrap">
+        <div class="chat-msgs" id="chat-msgs">
+          <div class="msg assistant">
+            <div class="mavatar">✦</div>
+            <div class="mbubble">Hi! I'm your AI study assistant. I know all your class materials. Ask me to explain something, quiz you, summarise a topic, or help with any of your lessons!</div>
+          </div>
+        </div>
+        <div class="quick-prompts">
+          <button onclick="qp('Quiz me on my most recent class materials')">Quiz me</button>
+          <button onclick="qp('Give me a summary of what I have learned this week')">Week summary</button>
+          <button onclick="qp('What topics should I focus on studying today?')">What to study?</button>
+          <button onclick="qp('Explain the hardest concept from my notes simply')">Explain a concept</button>
+        </div>
+        <div class="chat-input-row">
+          <textarea id="chat-input" placeholder="Ask your study assistant..." rows="1" onkeydown="chatKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="send-btn" onclick="sendChat()" id="send-btn">▶</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- SETTINGS -->
+<div id="settings-panel" class="settings-overlay hidden">
+  <div class="settings-box">
+    <div class="sh">
+      <h3>Settings</h3>
+      <button onclick="closeSettings()">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Gemini API Key</label>
+      <input type="password" id="set-gemini" placeholder="AIzaSy..."/>
+    </div>
+    <div class="form-group">
+      <label>Google OAuth Client ID</label>
+      <input type="text" id="set-google-id" placeholder="xxxxxxxx.apps.googleusercontent.com"/>
+    </div>
+    <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
+    <button class="btn-secondary" onclick="clearData()">Clear All Data</button>
+  </div>
+</div>
+
+<script>
+// ── CONSTANTS ──
+const COLORS=['#7c6fff','#2dd4bf','#f87171','#fbbf24','#4ade80','#f472b6','#60a5fa','#a78bfa','#34d399','#fb923c'];
+
+// Working free Gemini models as of April 2026
+// The app tries each in order and skips any that are quota-limited or unavailable
+// These are the CORRECT model names as of April 2026 per Google's official docs
+// Simple aliases (no date suffixes) — Google keeps these pointing to latest stable
+const MODELS_DEFAULT=[
+  'gemini-2.5-flash',        // Primary — 250 req/day free, best quality
+  'gemini-2.5-flash-lite',   // High volume — 1000 req/day free  
+  'gemini-2.5-pro',          // Fallback — 50 req/day free
+];
+let MODELS=MODELS_DEFAULT.slice(); // working copy, gets updated by auto-discovery
+
+// Auto-discover all working models from YOUR API key — runs once on launch
+// This means the app always knows exactly which models work for your account
+async function discoverModels(){
+  try{
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${S.geminiKey}&pageSize=50`);
+    if(!r.ok)return;
+    const d=await r.json();
+    const working=[];
+    for(const m of (d.models||[])){
+      const name=m.name.replace('models/','');
+      const actions=m.supportedGenerationMethods||[];
+      if(!actions.includes('generateContent'))continue;
+      // Only use flash/pro text models, skip image/audio/embedding models
+      if(name.includes('gemini-2.5-flash')&&!name.includes('image'))working.unshift(name);
+      else if(name.includes('gemini-2.5')&&!name.includes('image'))working.push(name);
+    }
+    if(working.length>0){
+      MODELS=working;
+      console.log('[StudyFlow] Discovered models:',MODELS);
+    }
+  }catch(e){
+    console.warn('[StudyFlow] Model discovery failed, using defaults:',e.message);
+  }
+}
+
+// ── STATE ──
+const S={
+  geminiKey:'',googleClientId:'',googleToken:null,
+  classes:[],notes:{},currentClass:null,currentTab:'notes',chatHistory:[]
+};
+
+// ── INIT ──
+function init(){
+  S.geminiKey=ls('sf_gk')||'';
+  S.googleClientId=ls('sf_gcid')||'';
+  const c=ls('sf_cls');if(c)try{S.classes=JSON.parse(c);}catch(e){}
+  const n=ls('sf_notes');if(n)try{S.notes=JSON.parse(n);}catch(e){}
+  const h=ls('sf_chat');if(h)try{S.chatHistory=JSON.parse(h);}catch(e){}
+  if(!S.geminiKey||!S.googleClientId){
+    document.getElementById('setup-modal').style.display='flex';
+  } else { launchApp(); }
+  setGreeting();
+}
+
+function ls(k,v){if(v!==undefined)localStorage.setItem(k,v);else return localStorage.getItem(k);}
+
+function save(){
+  ls('sf_gk',S.geminiKey);ls('sf_gcid',S.googleClientId);
+  ls('sf_cls',JSON.stringify(S.classes));
+  ls('sf_notes',JSON.stringify(S.notes));
+  ls('sf_chat',JSON.stringify(S.chatHistory.slice(-40)));
+}
+
+function saveSetup(){
+  const k=document.getElementById('setup-gemini-key').value.trim();
+  const c=document.getElementById('setup-google-id').value.trim();
+  if(!k){alert('Please enter your Gemini API key.');return;}
+  if(!c){alert('Please enter your Google Client ID.');return;}
+  S.geminiKey=k;S.googleClientId=c;save();
+  document.getElementById('setup-modal').style.display='none';
+  launchApp();
+}
+
+function launchApp(){
+  document.getElementById('app').classList.remove('hidden');
+  renderNav();renderDash();loadGSI();
+  // Discover working models for this API key in the background
+  if(S.geminiKey) discoverModels();
+}
+
+// ── GEMINI ENGINE ──
+// Tries every available model until one works.
+// Skips quota/rate/not-found errors automatically.
+async function callModel(model, contents, sysText, maxTok=8000){
+  const url=`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${S.geminiKey}`;
+  const body={
+    system_instruction:{parts:[{text:sysText}]},
+    contents,
+    generationConfig:{maxOutputTokens:maxTok,temperature:0.4}
+  };
+  let r,d;
+  try{
+    r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    d=await r.json();
+  }catch(netErr){
+    throw {skip:true,message:'Network error: '+netErr.message};
+  }
+  if(!r.ok){
+    const rawMsg=d?.error?.message||('HTTP '+r.status);
+    const msg=rawMsg.toLowerCase();
+    // Bad API key — tell user immediately, don't retry other models
+    if(r.status===400||(r.status===403&&(msg.includes('key')||msg.includes('api_key')))){
+      throw new Error('Gemini API key error: '+rawMsg+'. Go to Settings and paste a fresh key from aistudio.google.com/app/apikey');
+    }
+    if(r.status===401){
+      throw new Error('API key rejected. Go to Settings and check your Gemini API key.');
+    }
+    // Model unavailable / quota — skip to next model silently
+    if(r.status===429||r.status===404||r.status===503||
+       msg.includes('quota')||msg.includes('resource_exhausted')||
+       msg.includes('not found')||msg.includes('not supported')||
+       msg.includes('deprecated')||msg.includes('rate limit')){
+      throw {skip:true,message:rawMsg};
+    }
+    if(r.status===403){throw {skip:true,message:rawMsg};}
+    throw new Error(rawMsg);
+  }
+  const text=d.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||'';
+  if(!text){
+    const reason=d.candidates?.[0]?.finishReason;
+    if(reason&&reason!=='STOP')throw {skip:true,message:'Blocked: '+reason};
+    throw {skip:true,message:'Empty response'};
+  }
+  return text;
+}
+
+async function gemini(sysText, userText, maxTok=8000, extraParts=[]){
+  // extraParts = [{inlineData:{mimeType,data}}] for images/PDFs
+  const parts=[{text:userText},...extraParts];
+  const contents=[{role:'user',parts}];
+  const tried=[];
+  for(const model of MODELS){
+    tried.push(model);
+    try{
+      const result=await callModel(model,contents,sysText,maxTok);
+      return result;
+    }catch(e){
+      if(e.skip){console.warn(`[StudyFlow] Skipping ${model}: ${e.message}`);continue;}
+      throw e; // real error, don't retry
+    }
+  }
+  // All models exhausted — must be quota
+  showQuotaHelp(tried);
+  throw {handled:true,message:'quota'};
+}
+
+async function geminiChat(sysText, msgs){
+  const contents=msgs.map(m=>({
+    role:m.role==='assistant'?'model':'user',
+    parts:[{text:m.content}]
+  }));
+  for(const model of MODELS){
+    try{return await callModel(model,contents,sysText,1500);}
+    catch(e){if(e.skip){continue;}throw e;}
+  }
+  throw new Error('All models unavailable. Try again in a moment.');
+}
+
+// ── MATERIAL FETCHER ──
+// Reads the FULL content of every attached file — Docs, Slides, Sheets, PDFs, images
+// Uses Gemini File API to upload files so the AI can natively understand them including
+// diagrams, charts, images, tables — not just text extraction
+async function fetchAllMaterials(materials){
+  if(!materials||!materials.length)return{text:'',fileParts:[]};
+  const textParts=[];
+  const fileParts=[];
+
+  for(const mat of materials){
+    try{
+      if(mat.driveFile){
+        const f=mat.driveFile.driveFile||mat.driveFile;
+        const fileId=f.id||f.driveFileId;
+        if(!fileId)continue;
+
+        // Get file metadata
+        const metaR=await fetch(
+          `https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,mimeType,size`,
+          {headers:{Authorization:'Bearer '+S.googleToken}}
+        );
+        const meta=await metaR.json();
+        const mime=meta.mimeType||'';
+        const name=meta.name||'file';
+
+        updateToast(`Reading: ${name}`);
+
+        if(mime==='application/vnd.google-apps.document'){
+          // Google Doc — export full text, no limit
+          const expR=await fetch(
+            `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text/plain`,
+            {headers:{Authorization:'Bearer '+S.googleToken}}
+          );
+          const txt=await expR.text();
+          textParts.push(`\n===== GOOGLE DOC: ${name} =====\n${txt}\n=====END=====\n`);
+
+        }else if(mime==='application/vnd.google-apps.presentation'){
+          // Google Slides — export as plain text (all slides)
+          const expR=await fetch(
+            `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text/plain`,
+            {headers:{Authorization:'Bearer '+S.googleToken}}
+          );
+          const txt=await expR.text();
+          textParts.push(`\n===== GOOGLE SLIDES: ${name} =====\n${txt}\n=====END=====\n`);
+
+        }else if(mime==='application/vnd.google-apps.spreadsheet'){
+          const expR=await fetch(
+            `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text/csv`,
+            {headers:{Authorization:'Bearer '+S.googleToken}}
+          );
+          const txt=await expR.text();
+          textParts.push(`\n===== SPREADSHEET: ${name} =====\n${txt}\n=====END=====\n`);
+
+        }else if(mime==='application/pdf'||mime.startsWith('image/')){
+          // Download binary and upload to Gemini File API for native understanding
+          // This lets Gemini read diagrams, charts, images, handwriting in PDFs
+          updateToast(`Uploading ${name} to AI...`);
+          const dlR=await fetch(
+            `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+            {headers:{Authorization:'Bearer '+S.googleToken}}
+          );
+          if(dlR.ok){
+            const blob=await dlR.blob();
+            const filePart=await uploadToGeminiFileAPI(blob,mime,name);
+            if(filePart){
+              fileParts.push(filePart);
+              textParts.push(`\n[File uploaded for AI reading: ${name} (${mime})]`);
+            }else{
+              textParts.push(`\n[${name}: binary file — AI will analyse from upload]`);
+            }
+          }
+        }else{
+          // Try plain text
+          const dlR=await fetch(
+            `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+            {headers:{Authorization:'Bearer '+S.googleToken}}
+          );
+          if(dlR.ok&&dlR.headers.get('content-type')?.includes('text')){
+            const txt=await dlR.text();
+            textParts.push(`\n===== FILE: ${name} =====\n${txt.substring(0,50000)}\n=====END=====\n`);
+          }
+        }
+      }
+      if(mat.youtubeVideo) textParts.push(`\n[YouTube: ${mat.youtubeVideo.title||mat.youtubeVideo.id}]`);
+      if(mat.link) textParts.push(`\n[Link: ${mat.link.title||mat.link.url}]`);
+      if(mat.form) textParts.push(`\n[Google Form: ${mat.form.title||'form'}]`);
+    }catch(err){
+      console.warn('Material fetch error:',err);
+    }
+  }
+  return{text:textParts.join('\n'),fileParts};
+}
+
+// Upload a file to Gemini File API so the model can natively read it
+// (understands images, diagrams, graphs, charts inside PDFs)
+async function uploadToGeminiFileAPI(blob,mimeType,displayName){
+  try{
+    // Step 1: initiate resumable upload
+    const initR=await fetch(
+      `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${S.geminiKey}`,
+      {
+        method:'POST',
+        headers:{
+          'X-Goog-Upload-Protocol':'resumable',
+          'X-Goog-Upload-Command':'start',
+          'X-Goog-Upload-Header-Content-Length':blob.size,
+          'X-Goog-Upload-Header-Content-Type':mimeType,
+          'Content-Type':'application/json'
+        },
+        body:JSON.stringify({file:{display_name:displayName}})
+      }
+    );
+    if(!initR.ok)return null;
+    const uploadUrl=initR.headers.get('X-Goog-Upload-URL');
+    if(!uploadUrl)return null;
+
+    // Step 2: upload the file bytes
+    const uploadR=await fetch(uploadUrl,{
+      method:'POST',
+      headers:{
+        'X-Goog-Upload-Command':'upload, finalize',
+        'X-Goog-Upload-Offset':'0',
+        'Content-Type':mimeType
+      },
+      body:blob
+    });
+    if(!uploadR.ok)return null;
+    const fileData=await uploadR.json();
+    const fileUri=fileData?.file?.uri;
+    if(!fileUri)return null;
+
+    // Return a content part that Gemini can use natively
+    return{fileData:{mimeType,fileUri}};
+  }catch(e){
+    console.warn('File API upload failed:',e);
+    return null;
+  }
+}
+
+// ── GOOGLE AUTH ──
+function loadGSI(){
+  if(document.getElementById('gsi'))return;
+  const s=document.createElement('script');s.id='gsi';
+  s.src='https://accounts.google.com/gsi/client';
+  document.head.appendChild(s);
+}
+
+function handleGoogleAuth(){
+  if(S.googleToken){S.googleToken=null;setGStatus(false);return;}
+  if(!S.googleClientId){alert('Please add your Google Client ID in Settings.');return;}
+  if(!window.google){alert('Google still loading. Try again in a moment.');return;}
+  google.accounts.oauth2.initTokenClient({
+    client_id:S.googleClientId,
+    scope:'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.me.readonly https://www.googleapis.com/auth/classroom.announcements.readonly https://www.googleapis.com/auth/drive.readonly',
+    callback:(resp)=>{
+      if(resp.error){alert('Google auth failed: '+resp.error);return;}
+      S.googleToken=resp.access_token;setGStatus(true);syncClassroom();
+    }
+  }).requestAccessToken();
+}
+
+function setGStatus(on){
+  document.getElementById('sdot').classList.toggle('on',on);
+  document.getElementById('stext').textContent=on?'Connected':'Not connected';
+  const b=document.getElementById('gbtn');
+  b.textContent=on?'Disconnect':'Connect Google';
+  b.classList.toggle('on',on);
+}
+
+// ── CLASSROOM SYNC ──
+async function syncClassroom(){
+  if(!S.googleToken){alert('Please connect Google first.');return;}
+  const ic=document.getElementById('sync-icon');
+  const sb=document.getElementById('sync-btn');
+  ic.classList.add('syncing');sb.disabled=true;
+  try{
+    const cr=await fetch('https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE',
+      {headers:{Authorization:'Bearer '+S.googleToken}});
+    const cd=await cr.json();
+    if(!cd.courses){alert('No active courses found.');return;}
+    const newClasses=[];
+    for(let i=0;i<cd.courses.length;i++){
+      const c=cd.courses[i];const col=COLORS[i%COLORS.length];
+      const [cwr,ar]=await Promise.all([
+        fetch(`https://classroom.googleapis.com/v1/courses/${c.id}/courseWork?orderBy=updateTime+desc`,{headers:{Authorization:'Bearer '+S.googleToken}}),
+        fetch(`https://classroom.googleapis.com/v1/courses/${c.id}/announcements?orderBy=updateTime+desc`,{headers:{Authorization:'Bearer '+S.googleToken}})
+      ]);
+      const cwd=await cwr.json();const ad=await ar.json();
+      const res=[];
+      if(cwd.courseWork)for(const w of cwd.courseWork.slice(0,20))
+        res.push({id:w.id,title:w.title||'Untitled',description:w.description||'',
+          type:w.workType||'ASSIGNMENT',updateTime:w.updateTime,
+          materials:w.materials||[],hasNotes:!!S.notes[w.id]});
+      if(ad.announcements)for(const a of ad.announcements.slice(0,15))
+        res.push({id:a.id,title:a.text?a.text.substring(0,80):'Announcement',
+          description:a.text||'',type:'ANNOUNCEMENT',updateTime:a.updateTime,
+          materials:a.materials||[],hasNotes:!!S.notes[a.id]});
+      res.sort((a,b)=>new Date(b.updateTime)-new Date(a.updateTime));
+      newClasses.push({id:c.id,name:c.name,section:c.section||'',color:col,resources:res});
+    }
+    S.classes=newClasses;save();renderNav();renderDash();
+    alert('✅ Synced '+newClasses.length+' classes with '+newClasses.reduce((a,c)=>a+c.resources.length,0)+' resources!');
+  }catch(e){console.error(e);alert('Sync failed: '+e.message);}
+  finally{ic.classList.remove('syncing');sb.disabled=false;}
+}
+
+// ── NAVIGATION ──
+function showView(v){
+  document.querySelectorAll('.view').forEach(x=>x.classList.add('hidden'));
+  document.querySelectorAll('.sb-btn,.class-nav-btn').forEach(x=>x.classList.remove('active'));
+  document.getElementById('view-'+v).classList.remove('hidden');
+  const b=document.getElementById('nav-'+v);if(b)b.classList.add('active');
+  document.getElementById('topbar-title').textContent=v==='dashboard'?'Dashboard':v==='assistant'?'AI Assistant':v;
+  if(window.innerWidth<=768)closeSB();
+}
+
+function showClass(id){
+  const cls=S.classes.find(c=>c.id===id);if(!cls)return;
+  S.currentClass=id;
+  document.querySelectorAll('.view').forEach(x=>x.classList.add('hidden'));
+  document.querySelectorAll('.sb-btn,.class-nav-btn').forEach(x=>x.classList.remove('active'));
+  const b=document.getElementById('cn-'+id);if(b)b.classList.add('active');
+  document.getElementById('topbar-title').textContent=cls.name;
+  document.getElementById('view-class').classList.remove('hidden');
+  renderClassPage(cls);switchTab('notes');
+  if(window.innerWidth<=768)closeSB();
+}
+
+function toggleSB(){document.getElementById('sidebar').classList.toggle('open');}
+function closeSB(){document.getElementById('sidebar').classList.remove('open');}
+
+// ── RENDER NAV ──
+function renderNav(){
+  const nav=document.getElementById('classes-nav');
+  if(!S.classes.length){nav.innerHTML='<p style="font-size:.78rem;color:var(--text3);padding:0 .4rem">No classes yet.</p>';return;}
+  nav.innerHTML=S.classes.map(c=>`<button class="class-nav-btn" id="cn-${c.id}" onclick="showClass('${c.id}')"><span class="cdot" style="background:${c.color}"></span>${esc(c.name)}</button>`).join('');
+}
+
+// ── RENDER DASHBOARD ──
+function renderDash(){
+  const em=document.getElementById('dash-empty'),co=document.getElementById('dash-content');
+  if(!S.classes.length){em.classList.remove('hidden');co.classList.add('hidden');return;}
+  em.classList.add('hidden');co.classList.remove('hidden');
+  const tot=S.classes.reduce((a,c)=>a+c.resources.length,0);
+  const nc=Object.keys(S.notes).length;
+  document.getElementById('dash-banner').innerHTML=`<div style="font-size:1.9rem;flex-shrink:0">📚</div><div class="banner-text"><h3>${S.classes.length} classes · ${tot} resources · ${nc} with AI notes</h3><p>AI reads your full documents, slides, PDFs and images — including diagrams and graphs.</p></div>`;
+  document.getElementById('all-classes').innerHTML=S.classes.map(cls=>`
+    <div class="class-section fade-in">
+      <div class="csh">
+        <div class="cst">
+          <span style="width:11px;height:11px;border-radius:50%;background:${cls.color};display:inline-block"></span>
+          <h2>${esc(cls.name)}</h2>
+          ${cls.section?`<span class="tag" style="background:${cls.color}22;color:${cls.color}">${esc(cls.section)}</span>`:''}
+        </div>
+        <button class="cs-link" onclick="showClass('${cls.id}')">View all →</button>
+      </div>
+      <div class="resource-grid">${cls.resources.slice(0,4).map(r=>rcHtml(r,cls)).join('')}</div>
+    </div>`).join('');
+}
+
+function rcHtml(r,cls){
+  const hn=!!S.notes[r.id];
+  const dr=hn&&S.notes[r.id].driveRead;
+  const ds=r.updateTime?new Date(r.updateTime).toLocaleDateString('en-AU',{day:'numeric',month:'short'}):'';
+  const mc=r.materials?.length||0;
+  return `<div class="rc" style="--cc:${cls.color}">
+    <div class="rc-top"><span class="rtype">${ico(r.type)} ${r.type.replace(/_/g,' ')}</span><span class="rstatus ${hn?'s-done':'s-new'}">${hn?(dr?'✓ Docs read':'✓ Ready'):'New'}</span></div>
+    <h4>${esc(r.title)}</h4>
+    <p>${esc(r.description.substring(0,110))}</p>
+    ${mc?`<p style="font-size:.71rem;color:var(--teal);margin-top:.3rem">📎 ${mc} attachment${mc>1?'s':''} — AI reads everything</p>`:''}
+    <div class="rc-footer"><span class="rdate">${ds}</span><button class="btn-gen" onclick="genResource('${r.id}','${cls.id}')">${hn?'↺ Regen':'⚡ Generate Notes'}</button></div>
+  </div>`;
+}
+
+function ico(t){return{ASSIGNMENT:'📝',SHORT_ANSWER_QUESTION:'❓',MULTIPLE_CHOICE_QUESTION:'🔘',ANNOUNCEMENT:'📣',MATERIAL:'📎',QUIZ:'🧪'}[t]||'📄';}
+
+// ── CLASS PAGE ──
+function renderClassPage(cls){
+  const h=document.getElementById('class-header');
+  h.setAttribute('data-i',cls.name.charAt(0).toUpperCase());
+  h.innerHTML=`<div style="display:flex;align-items:center;gap:.65rem;margin-bottom:.35rem"><span style="width:13px;height:13px;border-radius:50%;background:${cls.color};display:inline-block;flex-shrink:0"></span><h1>${esc(cls.name)}</h1></div><div class="ch-meta">${cls.section?`<span>Section: ${esc(cls.section)}</span>`:''}<span>${cls.resources.length} resources</span><span>${cls.resources.filter(r=>S.notes[r.id]).length} with AI notes</span></div>`;
+  S.currentClass=cls.id;
+  renderClassTab(S.currentTab||'notes');
+}
+
+function switchTab(tab){
+  S.currentTab=tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  const b=document.getElementById('tab-'+tab);if(b)b.classList.add('active');
+  renderClassTab(tab);
+}
+
+function renderClassTab(tab){
+  const cls=S.classes.find(c=>c.id===S.currentClass);if(!cls)return;
+  const con=document.getElementById('class-content');
+  if(tab==='resources'){
+    con.innerHTML=`<div class="res-list">${cls.resources.map(r=>`
+      <div class="rli">
+        <div class="rli-icon" style="background:${cls.color}22">${ico(r.type)}</div>
+        <div class="rli-info"><h5>${esc(r.title)}</h5><p>${r.updateTime?new Date(r.updateTime).toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short',year:'numeric'}):''} · ${r.type.replace(/_/g,' ')}</p></div>
+        <div class="rli-actions"><button class="btn-gen" onclick="genResource('${r.id}','${cls.id}')">${S.notes[r.id]?'↺ Regen':'⚡ Generate'}</button></div>
+      </div>`).join('')}</div>`;
+    return;
+  }
+  const wn=cls.resources.filter(r=>S.notes[r.id]);
+  const wo=cls.resources.filter(r=>!S.notes[r.id]);
+  if(!wn.length){
+    con.innerHTML=`<div class="empty-state"><div class="empty-icon">✨</div><h3>No AI notes yet for ${esc(cls.name)}</h3><p>Go to the Resources tab and click "⚡ Generate" on any resource.</p><button class="btn-primary" onclick="switchTab('resources')" style="max-width:250px;margin:0 auto">Go to Resources →</button></div>`;
+    return;
+  }
+  if(tab==='notes'){
+    con.innerHTML=`<div>${wn.map(r=>{const n=S.notes[r.id];return `<div class="note-card fade-in"><div class="nch" onclick="toggleNote('nb-${r.id}',this)"><h4>${ico(r.type)} ${esc(r.title)}${n.driveRead?' <span style="font-size:.65rem;color:var(--teal);font-weight:400">📄 docs</span>':''}</h4><span class="ntog">▼</span></div><div class="ncb" id="nb-${r.id}">${fmtNotes(n.notes||'')}</div></div>`;}).join('')}${wo.length?`<div style="margin-top:1rem;padding:.875rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);font-size:.83rem;color:var(--text3)">${wo.length} more resource${wo.length>1?'s':''} without notes — go to Resources tab.</div>`:''}</div>`;
+  }else if(tab==='diagrams'){
+    con.innerHTML=`<div>${wn.map(r=>{const n=S.notes[r.id];return `<div class="diagram-card fade-in"><h4>${ico(r.type)} ${esc(r.title)}</h4><div class="diagram-content">${esc(n.diagrams||'No diagram generated.')}</div></div>`;}).join('')}</div>`;
+  }else if(tab==='qbank'){
+    con.innerHTML=`<div class="qbank-section">${wn.map(r=>{const n=S.notes[r.id];if(!n.qbank?.length)return'';return `<h3>📚 ${esc(r.title)}</h3>${n.qbank.map((q,i)=>qHtml(q,r.id,i)).join('')}<div style="margin-bottom:1.75rem"></div>`;}).join('')}</div>`;
+  }
+}
+
+function toggleNote(id,hdr){
+  document.getElementById(id).classList.toggle('open');
+  hdr.querySelector('.ntog').classList.toggle('open');
+}
+
+function fmtNotes(txt){
+  if(!txt)return'<p style="color:var(--text3)">No notes.</p>';
+  return txt
+    .replace(/^#### (.+)$/gm,'<h5>$1</h5>')
+    .replace(/^### (.+)$/gm,'<h5>$1</h5>')
+    .replace(/^## (.+)$/gm,'<h5>$1</h5>')
+    .replace(/^# (.+)$/gm,'<h5>$1</h5>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/^- (.+)$/gm,'<li>$1</li>')
+    .replace(/^[0-9]+\. (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>[\s\S]*?<\/li>)/g,'<ul>$1</ul>')
+    .replace(/\n\n/g,'<br><br>')
+    .replace(/\n/g,'<br>');
+}
+
+function qHtml(q,rid,i){
+  const qid=`${rid}-${i}`;
+  if(q.type==='mcq')return`<div class="qcard"><div class="qnum">Q${i+1} · Multiple Choice</div><div class="qtext">${esc(q.question)}</div><div class="q-opts">${(q.options||[]).map((o,oi)=>`<div class="qopt" id="qo-${qid}-${oi}" onclick="selOpt('${qid}',${oi},${q.correct})"><span style="font-weight:700;color:var(--text3);min-width:1.1rem">${String.fromCharCode(65+oi)}.</span> ${esc(o)}</div>`).join('')}</div></div>`;
+  return`<div class="qcard"><div class="qnum">Q${i+1} · Short Answer</div><div class="qtext">${esc(q.question)}</div><button class="q-reveal" onclick="revAns('qa-${qid}',this)">Show Answer</button><div class="qans" id="qa-${qid}">${esc(q.answer)}</div></div>`;
+}
+
+function selOpt(qid,ch,cor){
+  document.querySelectorAll(`[id^="qo-${qid}-"]`).forEach((o,i)=>{
+    if(i===cor)o.classList.add('correct');else if(i===ch)o.classList.add('wrong');
+    o.style.pointerEvents='none';
+  });
+}
+function revAns(id,btn){
+  const el=document.getElementById(id);el.classList.toggle('open');
+  btn.textContent=el.classList.contains('open')?'Hide Answer':'Show Answer';
+}
+
+// ── AI GENERATION ──
+async function genResource(rid,cid){
+  const cls=S.classes.find(c=>c.id===cid);
+  const res=cls?.resources.find(r=>r.id===rid);
+  if(!res)return;
+  if(!S.geminiKey){alert('Please add your Gemini API key in Settings.');openSettings();return;}
+
+  toast('Reading all attached files...');
+
+  // Fetch full content of every attachment
+  let matText='';
+  let fileParts=[];
+  try{
+    const mat=await fetchAllMaterials(res.materials||[]);
+    matText=mat.text;
+    fileParts=mat.fileParts;
+  }catch(e){console.warn('Material fetch error:',e);}
+
+  const hasContent=matText.trim().length>30||fileParts.length>0;
+
+  const ctx=
+`CLASS: ${cls.name}
+RESOURCE TITLE: ${res.title}
+RESOURCE TYPE: ${res.type}
+TEACHER DESCRIPTION: ${res.description||'(none)'}
+
+${hasContent?'FULL ATTACHED DOCUMENT CONTENT (read every word of this):\n'+matText:'(No attachments — base notes on title and description only)'}`;
+
+  updateToast('Generating notes, diagrams and questions...');
+
+  const sysPrompt=
+`You are an expert study assistant for a Year 11/12 Australian high school student.
+Your job is to create DETAILED study materials based ONLY on what the teacher has actually provided.
+DO NOT invent content — every fact, concept, definition and example must come from the provided resource.
+If files are attached (including PDFs, slides, images with diagrams or graphs), analyse them thoroughly.
+Write as if you are a top tutor who has read every single page and can explain it perfectly.`;
+
+  const userPrompt=
+`Create complete study materials for this classroom resource. Use ONLY the content provided.
+
+${ctx}
+
+Output EXACTLY this structure with these exact markers:
+
+===NOTES_START===
+Write comprehensive, detailed study notes here.
+Structure with ## headings, bullet points, **bold** key terms.
+Cover EVERY topic, concept, definition, formula, and example from the resource.
+Sections: ## Overview, ## Key Concepts, ## Detailed Content (one sub-section per topic), ## Key Formulas/Definitions (if any), ## Summary
+The notes must reflect ALL content from the attached files — if it is 100 slides, cover all 100 slides.
+===NOTES_END===
+
+===DIAGRAMS_START===
+Create 3 visual text diagrams based on the actual content:
+1. A concept map showing how the main ideas connect (use --> arrows)
+2. A process/flow diagram if any processes are described [Step A] --> [Step B]
+3. A structured table of key terms, definitions or comparisons
+Use ASCII art, Unicode symbols (→ ← ↑ ↓ ◆ ■ ●), clear labels.
+===DIAGRAMS_END===
+
+===QBANK_START===
+Return a JSON array of 10 questions based ONLY on the actual content.
+6 MCQ: {"type":"mcq","question":"specific question about the content","options":["A option","B option","C option","D option"],"correct":0}
+4 short answer: {"type":"short","question":"specific question","answer":"detailed answer from the content"}
+Questions must test understanding of the SPECIFIC content, not generic knowledge.
+Return ONLY the JSON array starting with [ — no other text.
+===QBANK_END===`;
+
+  try{
+    const raw=await gemini(sysPrompt, userPrompt, 8000, fileParts);
+
+    const extract=(txt,s,e)=>{
+      const si=txt.indexOf(s),ei=txt.indexOf(e);
+      if(si===-1||ei===-1)return'';
+      return txt.slice(si+s.length,ei).trim();
+    };
+
+    const notes   =extract(raw,'===NOTES_START===','===NOTES_END===')    ||raw;
+    const diagrams=extract(raw,'===DIAGRAMS_START===','===DIAGRAMS_END===')||'';
+    let   qraw    =extract(raw,'===QBANK_START===','===QBANK_END===')||'[]';
+
+    let qbank=[];
+    try{
+      // Clean and parse JSON
+      qraw=qraw.replace(/```json|```/g,'').trim();
+      const arrStart=qraw.indexOf('[');
+      if(arrStart>0)qraw=qraw.slice(arrStart);
+      qbank=JSON.parse(qraw);
+    }catch{
+      qbank=[
+        {type:'short',question:`What are the main topics covered in "${res.title}"?`,answer:'See the notes above for full details.'},
+        {type:'short',question:'List 3 key concepts from this lesson.',answer:'Review the Key Concepts section.'}
+      ];
+    }
+
+    S.notes[rid]={notes,diagrams,qbank,driveRead:hasContent,generatedAt:new Date().toISOString()};
+    res.hasNotes=true;save();renderDash();
+    if(S.currentClass===cid){renderClassPage(cls);renderClassTab(S.currentTab);}
+    toastOk(`✓ Notes ready${fileParts.length?` — read ${fileParts.length} file(s) including images/PDFs`:''}!`);
+  }catch(e){
+    hideToast();
+    if(e.handled)return; // Already showed the quota dialog
+    alert('Error: '+e.message);
+  }
+}
+
+async function testApiKey(){
+  const btn=document.getElementById('test-key-btn');
+  if(btn){btn.textContent='Testing...';btn.disabled=true;}
+  try{
+    const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${S.geminiKey}`;
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:'Say OK'}]}],generationConfig:{maxOutputTokens:5}})});
+    const d=await r.json();
+    if(r.ok){
+      toastOk('✓ API key works! Try generating notes again.');
+      document.getElementById('quota-dialog')?.remove();
+    } else {
+      alert('Key test failed: '+( d?.error?.message||'HTTP '+r.status));
+    }
+  }catch(e){alert('Test error: '+e.message);}
+  finally{if(btn){btn.textContent='Test my API key';btn.disabled=false;}}
+}
+
+function showQuotaHelp(triedModels){
+  const existing=document.getElementById('quota-dialog');
+  if(existing)existing.remove();
+  const d=document.createElement('div');
+  d.id='quota-dialog';
+  d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(6px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem';
+  d.innerHTML=`
+    <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:2rem;max-width:500px;width:100%">
+      <div style="font-size:2rem;margin-bottom:.75rem">⏱️</div>
+      <h3 style="font-family:var(--fh);font-size:1.25rem;font-weight:700;margin-bottom:.6rem">Could not reach Gemini</h3>
+      <p style="color:var(--text2);line-height:1.6;margin-bottom:1.1rem;font-size:.9rem">All available models returned an error. This can mean your daily quota is used up, or there's an issue with your API key.</p>
+      <div style="background:var(--bg3);border-radius:10px;padding:1rem;margin-bottom:1.1rem">
+        <p style="font-size:.86rem;color:var(--text2);line-height:1.8">
+          <strong style="color:var(--green)">Step 1:</strong> Click "Test my API key" below to check if the key works<br>
+          <strong style="color:var(--amber)">Step 2 (if quota):</strong> Wait until ~5pm Sydney time (midnight Pacific) for reset<br>
+          <strong style="color:var(--accent2)">Step 3 (if quota):</strong> Get a new free key at <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent2)">aistudio.google.com/app/apikey</a> → paste in Settings
+        </p>
+      </div>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+        <button id="test-key-btn" onclick="testApiKey()" style="flex:1;background:var(--bg3);color:var(--text);border:1px solid var(--border2);border-radius:8px;padding:.65rem;font-family:var(--fh);font-weight:700;font-size:.88rem;cursor:pointer;min-width:140px">Test my API key</button>
+        <button onclick="openSettings();document.getElementById('quota-dialog').remove()" style="flex:1;background:var(--bg3);color:var(--text);border:1px solid var(--border2);border-radius:8px;padding:.65rem;font-family:var(--fh);font-weight:700;font-size:.88rem;cursor:pointer;min-width:140px">Open Settings</button>
+        <button onclick="document.getElementById('quota-dialog').remove()" style="flex:1;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:.65rem;font-family:var(--fh);font-weight:700;font-size:.88rem;cursor:pointer;min-width:140px">Dismiss</button>
+      </div>
+    </div>`;
+  document.body.appendChild(d);
+}
+
+// ── TOASTS ──
+function toast(msg){
+  let t=document.getElementById('gt');
+  if(!t){t=document.createElement('div');t.id='gt';t.style.cssText='position:fixed;bottom:1.75rem;right:1.75rem;background:var(--bg2);border:1px solid rgba(124,111,255,.3);border-radius:var(--r);padding:.9rem 1.15rem;z-index:9998;display:flex;align-items:center;gap:.65rem;box-shadow:0 8px 28px rgba(0,0,0,.5);max-width:320px';document.body.appendChild(t);}
+  t.innerHTML=`<div style="width:18px;height:18px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0"></div><div><div style="font-family:var(--fh);font-size:.87rem;font-weight:700;color:var(--accent2)" id="toast-title">Working...</div><div style="font-size:.73rem;color:var(--text2);margin-top:2px" id="toast-sub">${esc(msg.substring(0,55))}</div></div>`;
+  t.style.display='flex';
+}
+function updateToast(msg){
+  const s=document.getElementById('toast-sub');if(s)s.textContent=msg.substring(0,55);
+}
+function hideToast(){const t=document.getElementById('gt');if(t)t.style.display='none';}
+function toastOk(msg){
+  hideToast();
+  let t=document.getElementById('gt2');
+  if(!t){t=document.createElement('div');t.id='gt2';t.style.cssText='position:fixed;bottom:1.75rem;right:1.75rem;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);border-radius:var(--r);padding:.8rem 1.15rem;z-index:9998;font-size:.83rem;color:var(--green);font-family:var(--fh);font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,.5);max-width:320px';document.body.appendChild(t);}
+  t.textContent=msg;t.style.display='block';
+  setTimeout(()=>{t.style.display='none';},5000);
+}
+
+// ── CHAT ──
+async function sendChat(){
+  const inp=document.getElementById('chat-input');
+  const txt=inp.value.trim();if(!txt)return;
+  if(!S.geminiKey){alert('Please add your Gemini API key in Settings.');return;}
+  inp.value='';inp.style.height='auto';
+  addMsg('user',txt);
+  S.chatHistory.push({role:'user',content:txt});
+  const tid=addMsg('assistant','',true);
+  document.getElementById('send-btn').disabled=true;
+  try{
+    let ctx='STUDENT CLASS NOTES:\n\n';
+    for(const c of S.classes){
+      ctx+=`CLASS: ${c.name}\n`;
+      for(const r of c.resources){
+        ctx+=`  RESOURCE: ${r.title} (${r.type})\n`;
+        const n=S.notes[r.id];
+        if(n)ctx+=`  NOTES SUMMARY: ${n.notes.substring(0,400)}\n`;
+      }
+    }
+    const sys=`You are StudyFlow AI, an expert and friendly study assistant for an Australian high school student.
+You have access to their complete class notes below. Help them study, explain concepts clearly, quiz them, create practice problems, and answer questions about their lessons.
+Always base your answers on their actual class notes when relevant. Be encouraging, specific, and educational.
+
+${ctx.substring(0,6000)}`;
+    const reply=await geminiChat(sys,S.chatHistory.slice(-20));
+    const el=document.getElementById(tid);
+    if(el){el.innerHTML=fmtNotes(reply);el.classList.remove('typing');}
+    S.chatHistory.push({role:'assistant',content:reply});save();
+  }catch(e){
+    const el=document.getElementById(tid);
+    if(el){el.textContent='Sorry, something went wrong: '+e.message;el.classList.remove('typing');}
+  }finally{document.getElementById('send-btn').disabled=false;}
+}
+
+function addMsg(role,txt,typing=false){
+  const con=document.getElementById('chat-msgs');
+  const id='m'+Date.now();
+  const d=document.createElement('div');
+  d.className=`msg ${role} fade-in`;
+  d.innerHTML=`<div class="mavatar">${role==='user'?'👤':'✦'}</div><div class="mbubble ${typing?'typing':''}" id="${id}">${typing?'':esc(txt).replace(/\n/g,'<br>')}</div>`;
+  con.appendChild(d);con.scrollTop=con.scrollHeight;return id;
+}
+
+function qp(t){document.getElementById('chat-input').value=t;sendChat();}
+function chatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,140)+'px';}
+
+// ── SETTINGS ──
+function openSettings(){
+  document.getElementById('set-gemini').value=S.geminiKey;
+  document.getElementById('set-google-id').value=S.googleClientId;
+  document.getElementById('settings-panel').classList.remove('hidden');
+}
+function closeSettings(){document.getElementById('settings-panel').classList.add('hidden');}
+function saveSettings(){
+  S.geminiKey=document.getElementById('set-gemini').value.trim();
+  S.googleClientId=document.getElementById('set-google-id').value.trim();
+  save();closeSettings();toastOk('✓ Settings saved!');
+}
+function clearData(){if(confirm('Delete all notes, classes and settings?')){localStorage.clear();location.reload();}}
+
+// ── UTILS ──
+function setGreeting(){
+  const h=new Date().getHours();
+  const el=document.getElementById('greeting');
+  if(el)el.textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+'! 👋';
+}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+init();
+</script>
+</body>
+</html>
